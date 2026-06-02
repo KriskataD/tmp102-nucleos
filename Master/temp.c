@@ -21,9 +21,6 @@ int16_t i2c_communicate(I2C_HandleTypeDef *hi2c1, UART_HandleTypeDef *huart2)
     if (rxSemaphore == NULL)
         rxSemaphore = xSemaphoreCreateBinary();
 
-    // Tell TMP102 that we want to read from the temperature register
-    buf[0] = REG_TEMP;  // The 0 element gets the temperature register value
-
     // Initiate a non-blocking read of 2 bytes from the temperature register using DMA
     ret = HAL_I2C_Mem_Read_DMA(hi2c1, TMP102_ADDR, REG_TEMP, 1, buf, 2);
 
