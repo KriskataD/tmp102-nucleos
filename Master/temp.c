@@ -3,7 +3,6 @@
 static HAL_StatusTypeDef ret;       // Used to check the status of the HAL functions
 static uint8_t buf[16];             // An array of 8-bit elements for transmitting and receiving data
 static float temp_c;                // Float variable for the real result in Celsius
-volatile uint8_t txComplete = 0;    // Flag for transmission complete
 volatile uint8_t rxComplete = 0;    // Flag for reception complete
 
 // DMA reception complete callback
