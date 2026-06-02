@@ -45,7 +45,7 @@ void StartTaskBSPI(void const *argument);
 int main(void)
 {
     /* USER CODE BEGIN 1 */
-    xQueue = xQueueCreate(10, sizeof(uint8_t));  // Create the queue
+    xQueue = xQueueCreate(10, 2 * sizeof(uint8_t));  // Create the queue
     /* USER CODE END 1 */
 
     /* ========================================================
