@@ -1,19 +1,26 @@
 #include "temp.h"  // Include the header file for I2C functions
+#include "FreeRTOS.h"
+#include "semphr.h"
 
-static HAL_StatusTypeDef ret;       // Used to check the status of the HAL functions
-static uint8_t buf[16];             // An array of 8-bit elements for transmitting and receiving data
-static float temp_c;                // Float variable for the real result in Celsius
-volatile uint8_t rxComplete = 0;    // Flag for reception complete
+static HAL_StatusTypeDef ret;           // Used to check the status of the HAL functions
+static uint8_t buf[16];                 // An array of 8-bit elements for transmitting and receiving data
+static float temp_c;                    // Float variable for the real result in Celsius
+static SemaphoreHandle_t rxSemaphore = NULL;
 
-// DMA reception complete callback
+// DMA reception complete callback — called from interrupt context
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    rxComplete = 1;  // Set flag when reception is complete
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(rxSemaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 // Function to communicate with the temperature sensor over I2C
 int16_t i2c_communicate(I2C_HandleTypeDef *hi2c1, UART_HandleTypeDef *huart2)
 {
+    if (rxSemaphore == NULL)
+        rxSemaphore = xSemaphoreCreateBinary();
+
     // Tell TMP102 that we want to read from the temperature register
     buf[0] = REG_TEMP;  // The 0 element gets the temperature register value
 
@@ -29,8 +36,8 @@ int16_t i2c_communicate(I2C_HandleTypeDef *hi2c1, UART_HandleTypeDef *huart2)
         return -1;  // Return error code
     }
 
-    while (!rxComplete);   // Blocking wait until reception is complete
-    rxComplete = 0;        // Reset the flag for next use
+    // Block the task (yielding the CPU) until the DMA callback gives the semaphore
+    xSemaphoreTake(rxSemaphore, portMAX_DELAY);
 
     // Combine the two bytes into a 12-bit value (temperature)
     return ((int16_t) buf[0] << 4) | (buf[1] >> 4);
