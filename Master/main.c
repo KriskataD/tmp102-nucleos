@@ -69,7 +69,7 @@ void StartI2CTask(void const *argument)
     for (;;)
     {
         // Retrieve the raw temperature data from the TMP102 sensor via I2C + DMA
-        uint16_t rawValue = i2c_communicate(&hi2c1, &huart2);
+        int16_t rawValue = i2c_communicate(&hi2c1, &huart2);
 
         if (rawValue)  // Check if rawValue is non-zero before processing
         {
