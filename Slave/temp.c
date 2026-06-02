@@ -20,10 +20,13 @@ void i2c_processResult(uint8_t *val, UART_HandleTypeDef *huart2)
     // Convert raw value to Celsius (0.0625 degrees per bit)
     temp_c = rawValue * 0.0625;
 
-    unsigned int temp_whole = (unsigned int)(temp_c);
-    unsigned int temp_frac  = (unsigned int)((temp_c - temp_whole) * 100);
+    // Use absolute value so whole/frac splitting works for negatives too
+    float abs_c      = temp_c < 0 ? -temp_c : temp_c;
+    unsigned int temp_whole = (unsigned int)(abs_c);
+    unsigned int temp_frac  = (unsigned int)((abs_c - temp_whole) * 100);
+    const char *sign = temp_c < 0 ? "-" : "";
 
-    sprintf((char*)buf, "%u.%02u C\n", temp_whole, temp_frac);
+    sprintf((char*)buf, "%s%u.%02u C\n", sign, temp_whole, temp_frac);
 
     // Send the temperature result over UART
     HAL_UART_Transmit(huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
